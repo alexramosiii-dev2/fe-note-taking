@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Roboto";
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        pre {
+            font-weight: 300;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            font-size: .9rem;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        p {
+            margin-bottom: 20px;
+        }
+
+        .note-card button {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            margin-left: auto;
+            display: block;
+        }
+
+        .note-card:hover button {
+            opacity: 1;
+        }
+
+        svg {
+            cursor: pointer;
+        }
+
+        header {
+            margin: 50px auto 30px auto;
+            width: fit-content;
+
+            #header-inputs {
+                box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+
+            #note-entry, #note-title {
+                width: 500px;
+                border: none;
+                font-size: 1.3rem;
+            }
+
+            #note-entry, #note-title {
+                outline: none;
+            }
+
+            #note-title {
+                font-size: 1.1rem;
+            }
+
+            #note-content {
+                padding-top: 20px;
+                padding-bottom: 5px;
+                display: block;
+                width: 100%;
+                border: none;
+                font-size: .8rem;
+                outline: none;
+            }
+        }
+
+        main {
+            width: 1440px;
+            margin: auto;
+
+            .notes-wrapper {
+                display: flex;
+                gap: 10px;
+            }
+    
+            .note-column {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .note-card {
+                box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+                border-radius: 3px;
+                padding: 15px 15px 15px 15px;
+                cursor: pointer;
+                outline-width: 1px;
+                outline-style: solid;
+                outline-color: rgba(60, 64, 67, 0);
+                transition: outline-color 200ms ease-out;
+            }
+
+            .note-card:hover {
+                outline-color:rgba(80, 90, 99, 0.548)
+            }
+        }
+
+     
+
+        .inactive {
+            display: none;
+        }
+
+        pre[contenteditable=true]:empty:before{
+            content: attr(placeholder);
+            color:grey;
+            cursor: text;
+        }
+
+        #edit-modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            place-content: center;
+        }
+
+        #edit-modal {
+            width: 425px;
+            max-width: 425px;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.1) 0px 8px 24px, rgba(17, 17, 26, 0.1) 0px 16px 56px;            
+
+            #modal-title {
+                border: none;
+                font-size: 1.1rem;
+                outline: none;
+                display: block;
+                width: 100%;
+            }
+
+            #modal-content {
+                padding-top: 20px;
+                padding-bottom: 10px;
+                margin-bottom: 50px;
+                display: block;
+                width: 100%;
+                border: none;
+                outline: none;
+            }
+        }
+
+        
+
+    </style>
+</head>
+<body>
+    <header>
+
+        <h1>Note-taking App</h1>
+        <p>Rite of passing</p>
+        
+        <div id="header-inputs">
+            <input type="text" id="note-entry" placeholder="Take a note...">
+            <div id="note-inputs" class="inactive">
+                <input type="text" id="note-title" placeholder="Title" autocomplete="off">
+                <pre contenteditable="true" id="note-content" placeholder="Take a note..."></pre>
+            </div>
+        </div>
+
+        
+    </header>
+    <main>
+        <div class="notes-wrapper" placholder="What do you have in mind?">
+            <div id="column-1" class="note-column"></div>
+            <div id="column-2" class="note-column"></div>
+            <div id="column-3" class="note-column"></div>
+            <div id="column-4" class="note-column"></div>
+            <div id="column-5" class="note-column"></div>
+            <div id="column-6" class="note-column"></div>
+        </div>
+    </main>
+
+    <div id="edit-modal-container">
+        <div id="edit-modal">
+            <input type="text" id="modal-title" placeholder="Title" autocomplete="off">
+            <pre contenteditable="true" id="modal-content" placeholder="Take a note..."></pre>
+        </div>
+    </div>
+
+
+    <script defer>
+
+        let data;
+        let editModalActive = false;
+        let modalId;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const editModalContainer = document.querySelector("#edit-modal-container");
+            
+            document.addEventListener("click", (event) => {
+                if(!editModalActive) return;
+                if(event.target == editModalContainer.firstElementChild) return;
+                if(editModalContainer.querySelector(":focus")) return;
+                editModalContainer.style.display = "none";
+                editModalActive = false;
+                modalId = null;
+                refreshNotes();
+            });
+
+            const noteTitle = document.querySelector("#note-title");
+            const noteContent = document.querySelector("#note-content");
+            const headerInputs = document.querySelector("#note-inputs");
+
+            document.querySelector("#note-entry").addEventListener("click", (e) => {
+                e.stopPropagation();
+                document.querySelector("#note-entry").style.display = "none";
+                document.querySelector("#note-inputs").style.display = "block";
+                document.querySelector("#note-content").focus();
+            })
+
+            document.querySelector("#note-title").addEventListener("keyup", (e) => {
+                if(e.key !== "Enter") return;
+                document.querySelector("#note-content").focus();
+            })
+
+            document.addEventListener("click", () => {
+                const noteTitleValue = noteTitle.value.trim();
+                const noteContentValue = noteContent.innerHTML.trim();
+
+                if(headerInputs.querySelector(":focus")) return;
+
+                document.querySelector("#note-entry").style.display = "block";
+                document.querySelector("#note-inputs").style.display = "none";
+
+                noteTitle.value = "";
+                noteContent.innerHTML = "";
+
+                if(!noteTitleValue.length && !noteContentValue.length) return;
+                addNote(noteTitleValue, noteContentValue);
+            });
+
+            const modalTitle = document.querySelector("#modal-title");            
+            const modalContent = document.querySelector("#modal-content");
+            
+            modalTitle.onkeyup = () => {
+                if(!modalTitle.value && !modalContent.innerHTML.length) {
+                    data = data.filter((note) => note.id !== modalId); 
+                } else {
+                    if(data.some((note) => note.id === modalId)){
+                        data = data.map((note) => note.id === modalId ? ({...note, title: modalTitle.value}) : note); 
+                    } else {
+                        data.push({id: modalId, title: modalTitle.value, content: modalContent.innerHTML});
+                    }
+                }
+                localStorage.setItem("data", JSON.stringify(data));
+            }
+
+            modalContent.onkeyup = () => {
+                if(modalContent.innerHTML === "<br>") modalContent.innerHTML = "";
+
+                if(!modalTitle.value && !modalContent.innerHTML.length) {
+                    data = data.filter((note) => note.id !== modalId); 
+                } else {
+                    if(data.some((note) => note.id === modalId)){
+                        data = data.map((note) => note.id === modalId ? ({...note, content: modalContent.innerHTML}) : note); 
+                    } else {
+                        data.push({id: modalId, title: modalTitle.value, content: modalContent.innerHTML});
+                    }
+                }
+                localStorage.setItem("data", JSON.stringify(data));
+            }
+
+
+            data = JSON.parse(localStorage.getItem("data")) ?? [];
+            refreshNotes();
+        })
+
+        // FUNCTIONS BELOW
+        function refreshNotes() {
+            const columns = Array.from(document.querySelectorAll(".note-column"));
+            
+            columns.forEach((col) => col.innerHTML = "");
+
+            data.forEach((note, index) => {
+                const columnPlacement = index % columns.length;
+                const noteElement = createNoteCard(note.id, note.title, note.content);
+                columns[columnPlacement].appendChild(noteElement);
+            });
+
+            const noteCards = Array.from(document.querySelectorAll(".note-card"));
+            const editModalContainer = document.querySelector("#edit-modal-container");
+            noteCards.forEach((noteCard) => {
+                noteCard.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    editModalContainer.style.display = "grid";
+                    editModalActive = true;
+                })
+            })
+        }
+
+        function createNoteCard(id, title, content) {
+            const noteElement = document.createElement("div");
+            noteElement.id = `note-${id}`
+            noteElement.classList.add("note-card")
+            noteElement.onclick = () => openModal(id);
+            noteElement.innerHTML = `
+                <button onclick="deleteNote(${id}, event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                    </svg>    
+                </button>
+                <h3>${title}</h3>
+                <pre>${content}</pre>
+            `
+            return noteElement
+        }
+        
+        function addNote(title, content) {
+            const id = Date.now();
+            data.push({id, title, content});
+            localStorage.setItem("data", JSON.stringify(data));
+            refreshNotes();
+        }
+
+        function deleteNote(id, event) {
+            event.stopPropagation();
+            data = data.filter((note) => note.id != id);
+            localStorage.setItem("data", JSON.stringify(data));
+            refreshNotes();
+        }
+
+        function openModal(id) {
+            modalId = id;
+            document.querySelector("#modal-title").value = document.querySelector(`#note-${id} h3`).innerText;
+            document.querySelector("#modal-content").innerHTML = document.querySelector(`#note-${id} pre`).innerHTML;
+        }
+
+
+
+
+
+        // const sample_data = [
+        //     {
+        //         "id": 1,
+        //         "title": "Grocery List",
+        //         "content": "1. Apples\n2. Bananas\n3. Carrots\n4. Milk\n5. Eggs"
+        //     },
+        //     {
+        //         "id": 2,
+        //         "title": "Meeting Notes: Project Kickoff",
+        //         "content": "1. Discussed project timeline\n2. Assigned tasks to team members\n3. Finalized scope of work\n4. Next meeting scheduled for next Wednesday"
+        //     },
+        //     {
+        //         "id": 3,
+        //         "title": "Ideas for New Blog Post",
+        //         "content": "1. 'Top 10 Productivity Hacks'\n2. 'How to Stay Motivated While Working from Home'\n3. 'The Best Tools for Remote Collaboration'\n4. 'Why Time Management is Key to Success'"
+        //     },
+        //     {
+        //         "id": 4,
+        //         "title": "Vacation Plans",
+        //         "content": "Destination: Japan\n1. Visit Tokyo, Kyoto, and Osaka\n2. Explore temples and gardens\n3. Try sushi and ramen at local restaurants\n4. Book flight tickets and hotel by end of the month"
+        //     },
+        //     {
+        //         "id": 5,
+        //         "title": "To-Do List",
+        //         "content": "1. Finish writing the report\n2. Respond to client emails\n3. Organize files in the cloud\n4. Prepare for team presentation"
+        //     },
+        //     {
+        //         "id": 6,
+        //         "title": "Recipe: Spaghetti Aglio e Olio",
+        //         "content": "Ingredients:\n1. Spaghetti\n2. Garlic\n3. Olive oil\n4. Red chili flakes\n5. Parsley\n6. Parmesan cheese\n\nInstructions:\n1. Boil spaghetti in salted water\n2. Sauté garlic and chili flakes in olive oil\n3. Toss spaghetti in the pan with garlic oil\n4. Garnish with parsley and parmesan"
+        //     },
+        //     {
+        //         "id": 7,
+        //         "title": "Book Ideas",
+        //         "content": "1. A fantasy novel set in a post-apocalyptic world\n2. A self-help book about overcoming fear and taking risks\n3. A memoir on life lessons from traveling the world\n4. A science fiction thriller involving AI and ethics"
+        //     },
+        //     {
+        //         "id": 8,
+        //         "title": "Workout Routine",
+        //         "content": "1. Monday: Chest & Triceps\n2. Tuesday: Back & Biceps\n3. Wednesday: Rest or Cardio\n4. Thursday: Legs\n5. Friday: Shoulders & Abs\n6. Saturday: Full body workout\n7. Sunday: Rest"
+        //     },
+        //     {
+        //         "id": 9,
+        //         "title": "Tech Stack for New App",
+        //         "content": "1. Frontend: React.js\n2. Backend: Node.js + Express\n3. Database: MongoDB\n4. Authentication: JWT\n5. Hosting: AWS\n6. CI/CD: GitHub Actions"
+        //     },
+        //     {
+        //         "id": 10,
+        //         "title": "Shopping List",
+        //         "content": "1. New laptop\n2. Office chair\n3. Noise-canceling headphones\n4. Wireless mouse\n5. External hard drive"
+        //     }
+        // ]
+        // localStorage.setItem("data", JSON.stringify(sample_data));
+        // localStorage.clear();
+        
+    </script>
+    
+</body>
+</html>
